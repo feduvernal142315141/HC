@@ -1,22 +1,21 @@
 import type { Metadata } from "next";
-import { Manrope, IBM_Plex_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const manrope = Manrope({
-  variable: "--font-manrope",
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
-const ibmPlexMono = IBM_Plex_Mono({
-  variable: "--font-ibm-plex-mono",
-  weight: ["400", "500"],
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "HC Standalone",
-  description: "Modulo de historia clinica aislado",
+  title: "Dental Pro | Sistema de Gestión Clínica",
+  description: "Sistema profesional de gestión de historia clínica odontológica",
 };
 
 export default function RootLayout({
@@ -27,9 +26,9 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${manrope.variable} ${ibmPlexMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full`}
     >
-      <body className="min-h-screen antialiased">
+      <body className="min-h-screen antialiased font-sans">
         {children}
         <Toaster richColors position="top-right" />
       </body>

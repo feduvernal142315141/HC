@@ -142,77 +142,67 @@ export function BudgetSection({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-primary/10">
-            <Receipt className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-foreground tracking-tight">Presupuestos</h2>
-            <p className="text-muted-foreground">
-              Gestiona planes de tratamiento y presupuestos del paciente
-            </p>
-          </div>
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Presupuestos</h2>
+          <p className="text-sm text-muted-foreground">
+            Gestiona planes de tratamiento y presupuestos
+          </p>
         </div>
 
         <div className="flex gap-2">
           <Dialog open={isCreatePlanOpen} onOpenChange={setIsCreatePlanOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 rounded-xl">
+              <Button variant="outline" size="sm" className="gap-1.5">
                 <Plus className="h-4 w-4" />
                 Nuevo Plan
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl rounded-2xl">
+            <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                  Crear Plan de Tratamiento
-                </DialogTitle>
+                <DialogTitle>Crear Plan de Tratamiento</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <Label>Nombre del Plan</Label>
-                  <Input placeholder="Ej: Rehabilitacion Sector Posterior" className="rounded-xl" />
+                  <Input placeholder="Ej: Rehabilitacion Sector Posterior" />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Descripcion</Label>
-                  <Textarea placeholder="Descripcion del plan de tratamiento..." rows={3} className="rounded-xl" />
+                  <Textarea placeholder="Descripcion del plan de tratamiento..." rows={3} />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Tratamientos Incluidos</Label>
-                  <div className="border border-border rounded-xl divide-y divide-border overflow-hidden">
+                  <div className="border border-border rounded-lg divide-y divide-border overflow-hidden">
                     {treatments.slice(0, 4).map((treatment, index) => (
-                      <div key={treatment.id} className="flex items-center gap-3 p-3 bg-card hover:bg-muted/50 transition-colors">
+                      <div key={treatment.id} className="flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors">
                         <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{treatment.procedure}</p>
+                          <p className="text-sm font-medium truncate">{treatment.procedure}</p>
                           <p className="text-xs text-muted-foreground">
-                            Pieza {treatment.toothNumbers.join(", ")} - {treatment.specialty}
+                            Pieza {treatment.toothNumbers.join(", ")}
                           </p>
                         </div>
-                        <Badge variant="outline" className="text-xs rounded-lg">
-                          Orden {index + 1}
+                        <Badge variant="secondary" className="text-xs">
+                          {index + 1}
                         </Badge>
-                        <span className="text-sm font-semibold text-foreground">{formatCurrency(treatment.cost)}</span>
+                        <span className="text-sm font-medium">{formatCurrency(treatment.cost)}</span>
                       </div>
                     ))}
                   </div>
-                  <Button variant="outline" size="sm" className="w-full gap-2 mt-2 rounded-xl">
+                  <Button variant="outline" size="sm" className="w-full gap-1.5 mt-2">
                     <Plus className="h-4 w-4" />
                     Agregar Tratamiento
                   </Button>
                 </div>
 
                 <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" onClick={() => setIsCreatePlanOpen(false)} className="rounded-xl">
-                    Cancelar
-                  </Button>
-                  <Button onClick={handleCreatePlan} className="rounded-xl">Crear Plan</Button>
+                  <Button variant="outline" onClick={() => setIsCreatePlanOpen(false)}>Cancelar</Button>
+                  <Button onClick={handleCreatePlan}>Crear Plan</Button>
                 </div>
               </div>
             </DialogContent>
@@ -220,28 +210,25 @@ export function BudgetSection({
 
           <Dialog open={isCreateBudgetOpen} onOpenChange={setIsCreateBudgetOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="gap-2 rounded-xl shadow-sm">
+              <Button size="sm" className="gap-1.5">
                 <Plus className="h-4 w-4" />
                 Nuevo Presupuesto
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[90vh] rounded-2xl">
+            <DialogContent className="max-w-3xl max-h-[90vh]">
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Receipt className="h-5 w-5 text-primary" />
-                  Crear Presupuesto
-                </DialogTitle>
+                <DialogTitle>Crear Presupuesto</DialogTitle>
               </DialogHeader>
               <ScrollArea className="max-h-[70vh]">
-                <div className="space-y-5 py-4 pr-4">
+                <div className="space-y-4 py-4 pr-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Plan de Tratamiento</Label>
                       <Select>
-                        <SelectTrigger className="rounded-xl">
+                        <SelectTrigger>
                           <SelectValue placeholder="Seleccionar plan" />
                         </SelectTrigger>
-                        <SelectContent className="rounded-xl">
+                        <SelectContent>
                           {treatmentPlans.map((plan) => (
                             <SelectItem key={plan.id} value={plan.id}>
                               {plan.name}
@@ -252,45 +239,41 @@ export function BudgetSection({
                     </div>
                     <div className="space-y-2">
                       <Label>Valido hasta</Label>
-                      <Input type="date" className="rounded-xl" />
+                      <Input type="date" />
                     </div>
                   </div>
 
-                  <div className="h-px bg-border" />
+                  <div className="border-t border-border" />
 
                   <div className="space-y-2">
                     <Label>Tratamientos Incluidos</Label>
-                    <div className="border border-border rounded-xl overflow-hidden">
-                      <div className="grid grid-cols-12 gap-2 p-3 bg-muted/50 text-xs font-medium text-muted-foreground">
+                    <div className="border border-border rounded-lg overflow-hidden">
+                      <div className="grid grid-cols-12 gap-2 p-2.5 bg-muted text-xs font-medium text-muted-foreground">
                         <div className="col-span-5">Tratamiento</div>
                         <div className="col-span-2">Pieza</div>
                         <div className="col-span-2 text-right">Precio</div>
-                        <div className="col-span-2 text-right">Descuento</div>
+                        <div className="col-span-2 text-right">Desc.</div>
                         <div className="col-span-1"></div>
                       </div>
                       <div className="divide-y divide-border">
                         {treatments.slice(0, 4).map((treatment) => (
-                          <div key={treatment.id} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-muted/30 transition-colors">
+                          <div key={treatment.id} className="grid grid-cols-12 gap-2 p-2.5 items-center hover:bg-muted/50 transition-colors">
                             <div className="col-span-5">
-                              <p className="text-sm font-medium text-foreground">{treatment.procedure}</p>
+                              <p className="text-sm font-medium">{treatment.procedure}</p>
                               <p className="text-xs text-muted-foreground">{treatment.specialty}</p>
                             </div>
-                            <div className="col-span-2 text-sm text-foreground font-mono">
+                            <div className="col-span-2 text-sm font-mono">
                               {treatment.toothNumbers.join(", ")}
                             </div>
-                            <div className="col-span-2 text-right text-sm font-semibold text-foreground">
+                            <div className="col-span-2 text-right text-sm font-medium">
                               {formatCurrency(treatment.cost)}
                             </div>
                             <div className="col-span-2">
-                              <Input
-                                type="number"
-                                placeholder="0%"
-                                className="h-8 text-right text-sm rounded-lg"
-                              />
+                              <Input type="number" placeholder="0%" className="h-8 text-right text-sm" />
                             </div>
                             <div className="col-span-1 text-right">
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                                <Trash2 className="h-3.5 w-3.5" />
                               </Button>
                             </div>
                           </div>

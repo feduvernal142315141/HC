@@ -227,13 +227,13 @@ export function ClinicalHistoryLayout({ patientId, onClose }: ClinicalHistoryLay
           <aside
             className={cn(
               "fixed lg:relative z-50 lg:z-auto h-[calc(100vh-76px)] transition-all duration-300 ease-out",
-              // Glass effect background
-              "bg-card/95 backdrop-blur-xl border-r border-border",
+              // Clean background
+              "bg-sidebar border-r border-sidebar-border",
               // Width states
-              isNavCollapsed ? "w-[72px]" : "w-64",
+              isNavCollapsed ? "w-[68px]" : "w-60",
               // Mobile states
               isMobileNavOpen
-                ? "translate-x-0 shadow-xl"
+                ? "translate-x-0 shadow-lg"
                 : "-translate-x-full lg:translate-x-0"
             )}
           >
@@ -290,35 +290,27 @@ export function ClinicalHistoryLayout({ patientId, onClose }: ClinicalHistoryLay
                                 key={item.id}
                                 onClick={() => handleSectionChange(item.id)}
                                 className={cn(
-                                  "w-full flex items-center gap-3 rounded-xl transition-all duration-150",
-                                  isNavCollapsed ? "justify-center p-2.5" : "px-3 py-2.5",
-                                  // Active state
+                                  "w-full flex items-center gap-3 rounded-lg transition-all duration-150",
+                                  isNavCollapsed ? "justify-center p-2" : "px-3 py-2",
+                                  // Active state - clean and professional
                                   isActive
-                                    ? "bg-primary text-primary-foreground shadow-sm"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/80",
-                                  // Active indicator
+                                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                    : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent/50",
+                                  // Relative for indicator
                                   "relative"
                                 )}
                               >
-                                {/* Active indicator line */}
-                                {isActive && !isNavCollapsed && (
-                                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary-foreground/30 rounded-r-full" />
+                                {/* Subtle active indicator */}
+                                {isActive && (
+                                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 bg-foreground rounded-r-full" />
                                 )}
                                 
-                                <Icon className={cn(
-                                  "h-[18px] w-[18px] shrink-0 transition-transform duration-150",
-                                  isActive && "scale-110"
-                                )} />
+                                <Icon className="h-4 w-4 shrink-0" />
                                 
                                 {!isNavCollapsed && (
-                                  <div className="flex flex-col items-start text-left min-w-0">
-                                    <span className={cn(
-                                      "text-sm font-medium truncate",
-                                      isActive && "font-semibold"
-                                    )}>
-                                      {item.label}
-                                    </span>
-                                  </div>
+                                  <span className="text-sm truncate">
+                                    {item.label}
+                                  </span>
                                 )}
                               </button>
                             );
@@ -348,26 +340,18 @@ export function ClinicalHistoryLayout({ patientId, onClose }: ClinicalHistoryLay
 
               {/* Nav Footer */}
               <div className={cn(
-                "border-t border-border/50 p-3",
-                isNavCollapsed ? "flex flex-col items-center gap-3" : "space-y-3"
+                "border-t border-sidebar-border p-3",
+                isNavCollapsed ? "flex flex-col items-center gap-2" : ""
               )}>
                 <div className={cn(
                   "flex items-center",
                   isNavCollapsed ? "justify-center" : "justify-between px-2"
                 )}>
                   {!isNavCollapsed && (
-                    <div>
-                      <p className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">
-                        Sistema Dental
-                      </p>
-                      <p className="text-xs text-muted-foreground">v2.0 Premium</p>
-                    </div>
+                    <p className="text-xs text-muted-foreground">v2.0</p>
                   )}
                   <ThemeToggle />
                 </div>
-                {isNavCollapsed && (
-                  <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                )}
               </div>
             </div>
           </aside>
