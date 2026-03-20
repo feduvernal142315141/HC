@@ -16,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  ThemeToggle,
 } from "@/components/ui";
 import type { PatientClinical, ClinicalAlert, AlertSeverity } from "@/lib/clinical-history/types";
 import {
@@ -305,6 +306,9 @@ export function PatientHeader({ patient, isLoading, onClose, onQuickAction }: Pa
                 <span className="truncate max-w-[80px]">{patient.insurancePlan}</span>
               </Badge>
             )}
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
           </div>
         </div>
       </header>

@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   DENTAL PRO DESIGN SYSTEM
+   DENTAL PRO DESIGN SYSTEM v2.0
    Clean, minimal SaaS aesthetic - Stripe/Linear/Vercel inspired
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -393,76 +393,4 @@
   50% { opacity: 0.6; }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   COMPONENT STYLES
-   ═══════════════════════════════════════════════════════════════════════════ */
-@layer components {
-  /* Premium Card */
-  .card-premium {
-    @apply relative overflow-hidden bg-card;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-card);
-    transition: box-shadow var(--transition-base), border-color var(--transition-base);
-  }
 
-  .card-premium:hover {
-    box-shadow: var(--shadow-card-hover);
-  }
-
-  /* Status Pills */
-  .pill-success {
-    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium;
-    background: var(--success-muted);
-    color: var(--success);
-  }
-
-  .pill-warning {
-    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium;
-    background: var(--warning-muted);
-    color: var(--warning-foreground);
-  }
-
-  .dark .pill-warning {
-    color: var(--warning);
-  }
-
-  .pill-destructive {
-    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium;
-    background: var(--destructive-muted);
-    color: var(--destructive);
-  }
-
-  .pill-info {
-    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium;
-    background: var(--info-muted);
-    color: var(--info);
-  }
-
-  .pill-clinical {
-    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium;
-    background: var(--clinical-muted);
-    color: var(--clinical);
-  }
-
-  .pill-neutral {
-    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground;
-  }
-
-  /* Empty State */
-  .empty-state {
-    @apply flex flex-col items-center justify-center py-12 px-6 text-center;
-  }
-
-  .empty-state .empty-icon {
-    @apply w-12 h-12 mb-3 text-muted-foreground/30;
-  }
-
-  .empty-state .empty-title {
-    @apply text-sm font-medium text-foreground mb-1;
-  }
-
-  .empty-state .empty-description {
-    @apply text-xs text-muted-foreground max-w-xs;
-  }
-}
