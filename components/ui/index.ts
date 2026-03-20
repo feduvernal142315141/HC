@@ -83,3 +83,4 @@ export {
   AccordionContent,
 } from "./primitives/shadcn/accordion";
 export { AspectRatio } from "./primitives/shadcn/aspect-ratio";
+export { ThemeToggle } from "./theme-toggle";

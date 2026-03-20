@@ -4,6 +4,9 @@ import { useState } from "react"
 import {
   Card,
   CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
   Button,
   Badge,
   Input,
@@ -30,7 +33,6 @@ import {
   TabsTrigger,
   ScrollArea,
   Progress,
-  Separator,
 } from "@/components/ui"
 import {
   Receipt,
@@ -52,6 +54,9 @@ import {
   Copy,
   Trash2,
   GripVertical,
+  Sparkles,
+  CreditCard,
+  Target,
 } from "lucide-react"
 import { Budget, TreatmentPlan, DentalTreatment } from "@/lib/clinical-history/types"
 import { cn } from "@/lib/utils/utils"
@@ -69,22 +74,22 @@ interface BudgetSectionProps {
 const budgetStatusConfig = {
   proposed: {
     label: "Propuesto",
-    color: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+    variant: "info" as const,
     icon: FileText,
   },
   approved: {
     label: "Aprobado",
-    color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+    variant: "success" as const,
     icon: CheckCircle2,
   },
   rejected: {
     label: "Rechazado",
-    color: "bg-red-500/10 text-red-500 border-red-500/20",
+    variant: "destructive" as const,
     icon: XCircle,
   },
   expired: {
     label: "Expirado",
-    color: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
+    variant: "ghost" as const,
     icon: Clock,
   },
 }
@@ -137,60 +142,273 @@ export function BudgetSection({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Overview Stats */}
+    <div className="space-y-8">
+      {/* Section Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-primary/10">
+            <Receipt className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">Presupuestos</h2>
+            <p className="text-muted-foreground">
+              Gestiona planes de tratamiento y presupuestos del paciente
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <Dialog open={isCreatePlanOpen} onOpenChange={setIsCreatePlanOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2 rounded-xl">
+                <Plus className="h-4 w-4" />
+                Nuevo Plan
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl rounded-2xl">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  Crear Plan de Tratamiento
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Nombre del Plan</Label>
+                  <Input placeholder="Ej: Rehabilitacion Sector Posterior" className="rounded-xl" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Descripcion</Label>
+                  <Textarea placeholder="Descripcion del plan de tratamiento..." rows={3} className="rounded-xl" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Tratamientos Incluidos</Label>
+                  <div className="border border-border rounded-xl divide-y divide-border overflow-hidden">
+                    {treatments.slice(0, 4).map((treatment, index) => (
+                      <div key={treatment.id} className="flex items-center gap-3 p-3 bg-card hover:bg-muted/50 transition-colors">
+                        <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{treatment.procedure}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Pieza {treatment.toothNumbers.join(", ")} - {treatment.specialty}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="text-xs rounded-lg">
+                          Orden {index + 1}
+                        </Badge>
+                        <span className="text-sm font-semibold text-foreground">{formatCurrency(treatment.cost)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full gap-2 mt-2 rounded-xl">
+                    <Plus className="h-4 w-4" />
+                    Agregar Tratamiento
+                  </Button>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button variant="outline" onClick={() => setIsCreatePlanOpen(false)} className="rounded-xl">
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleCreatePlan} className="rounded-xl">Crear Plan</Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isCreateBudgetOpen} onOpenChange={setIsCreateBudgetOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="gap-2 rounded-xl shadow-sm">
+                <Plus className="h-4 w-4" />
+                Nuevo Presupuesto
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl max-h-[90vh] rounded-2xl">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Receipt className="h-5 w-5 text-primary" />
+                  Crear Presupuesto
+                </DialogTitle>
+              </DialogHeader>
+              <ScrollArea className="max-h-[70vh]">
+                <div className="space-y-5 py-4 pr-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Plan de Tratamiento</Label>
+                      <Select>
+                        <SelectTrigger className="rounded-xl">
+                          <SelectValue placeholder="Seleccionar plan" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl">
+                          {treatmentPlans.map((plan) => (
+                            <SelectItem key={plan.id} value={plan.id}>
+                              {plan.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Valido hasta</Label>
+                      <Input type="date" className="rounded-xl" />
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-border" />
+
+                  <div className="space-y-2">
+                    <Label>Tratamientos Incluidos</Label>
+                    <div className="border border-border rounded-xl overflow-hidden">
+                      <div className="grid grid-cols-12 gap-2 p-3 bg-muted/50 text-xs font-medium text-muted-foreground">
+                        <div className="col-span-5">Tratamiento</div>
+                        <div className="col-span-2">Pieza</div>
+                        <div className="col-span-2 text-right">Precio</div>
+                        <div className="col-span-2 text-right">Descuento</div>
+                        <div className="col-span-1"></div>
+                      </div>
+                      <div className="divide-y divide-border">
+                        {treatments.slice(0, 4).map((treatment) => (
+                          <div key={treatment.id} className="grid grid-cols-12 gap-2 p-3 items-center hover:bg-muted/30 transition-colors">
+                            <div className="col-span-5">
+                              <p className="text-sm font-medium text-foreground">{treatment.procedure}</p>
+                              <p className="text-xs text-muted-foreground">{treatment.specialty}</p>
+                            </div>
+                            <div className="col-span-2 text-sm text-foreground font-mono">
+                              {treatment.toothNumbers.join(", ")}
+                            </div>
+                            <div className="col-span-2 text-right text-sm font-semibold text-foreground">
+                              {formatCurrency(treatment.cost)}
+                            </div>
+                            <div className="col-span-2">
+                              <Input
+                                type="number"
+                                placeholder="0%"
+                                className="h-8 text-right text-sm rounded-lg"
+                              />
+                            </div>
+                            <div className="col-span-1 text-right">
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button variant="outline" size="sm" className="gap-2 rounded-xl">
+                      <Plus className="h-4 w-4" />
+                      Agregar Tratamiento
+                    </Button>
+                  </div>
+
+                  <div className="h-px bg-border" />
+
+                  <div className="space-y-3 p-5 bg-muted/30 rounded-xl">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <span className="font-medium text-foreground">{formatCurrency(15500)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm items-center">
+                      <span className="text-muted-foreground">Descuento General</span>
+                      <div className="flex items-center gap-2">
+                        <Input type="number" placeholder="0%" className="h-7 w-20 text-right text-sm rounded-lg" />
+                        <span className="text-destructive font-medium">-{formatCurrency(1550)}</span>
+                      </div>
+                    </div>
+                    <div className="h-px bg-border" />
+                    <div className="flex justify-between text-xl font-bold">
+                      <span className="text-foreground">Total</span>
+                      <span className="text-primary">{formatCurrency(13950)}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Notas</Label>
+                    <Textarea placeholder="Notas adicionales para el presupuesto..." rows={2} className="rounded-xl" />
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button variant="outline" onClick={() => setIsCreateBudgetOpen(false)} className="rounded-xl">
+                      Cancelar
+                    </Button>
+                    <Button variant="outline" className="gap-2 rounded-xl">
+                      <Eye className="h-4 w-4" />
+                      Vista Previa
+                    </Button>
+                    <Button onClick={handleCreateBudget} className="gap-2 rounded-xl shadow-sm">
+                      <Send className="h-4 w-4" />
+                      Crear y Enviar
+                    </Button>
+                  </div>
+                </div>
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      {/* Overview Stats - Premium Financial Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-card/50 border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-primary/10">
+        <Card className="group">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Presupuestos</p>
+                <p className="text-3xl font-bold text-foreground tracking-tight">{budgets.length}</p>
+                <p className="text-xs text-muted-foreground">Total creados</p>
+              </div>
+              <div className="p-3 rounded-xl bg-primary/10 group-hover:scale-105 transition-transform">
                 <Receipt className="h-5 w-5 text-primary" />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{budgets.length}</p>
-                <p className="text-xs text-muted-foreground">Presupuestos</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="group">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Propuesto</p>
+                <p className="text-3xl font-bold text-foreground tracking-tight">{formatCurrency(totalProposed)}</p>
+                <p className="text-xs text-muted-foreground">Pendientes de aprobar</p>
+              </div>
+              <div className="p-3 rounded-xl bg-info/10 group-hover:scale-105 transition-transform">
+                <Clock className="h-5 w-5 text-info" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-card/50 border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-blue-500/10">
-                <Clock className="h-5 w-5 text-blue-500" />
+        <Card className="group">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Aprobado</p>
+                <p className="text-3xl font-bold text-success tracking-tight">{formatCurrency(totalApproved)}</p>
+                <p className="text-xs text-muted-foreground">Total aprobado</p>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{formatCurrency(totalProposed)}</p>
-                <p className="text-xs text-muted-foreground">Propuesto</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-card/50 border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-emerald-500/10">
-                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{formatCurrency(totalApproved)}</p>
-                <p className="text-xs text-muted-foreground">Aprobado</p>
+              <div className="p-3 rounded-xl bg-success/10 group-hover:scale-105 transition-transform">
+                <CheckCircle2 className="h-5 w-5 text-success" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-card/50 border-border/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-amber-500/10">
-                <TrendingUp className="h-5 w-5 text-amber-500" />
+        <Card className="group">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Planes</p>
+                <p className="text-3xl font-bold text-foreground tracking-tight">{treatmentPlans.length}</p>
+                <p className="text-xs text-muted-foreground">Planes activos</p>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{treatmentPlans.length}</p>
-                <p className="text-xs text-muted-foreground">Planes de Tratamiento</p>
+              <div className="p-3 rounded-xl bg-warning/10 group-hover:scale-105 transition-transform">
+                <Target className="h-5 w-5 text-warning" />
               </div>
             </div>
           </CardContent>
@@ -199,216 +417,37 @@ export function BudgetSection({
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="budgets" className="w-full">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-            <TabsList>
-              <TabsTrigger value="budgets">Presupuestos</TabsTrigger>
-              <TabsTrigger value="plans">Planes de Tratamiento</TabsTrigger>
-            </TabsList>
-            <Badge variant="outline" className="w-fit">Paciente #{patientRef}</Badge>
-
-          <div className="flex gap-2">
-            <Dialog open={isCreatePlanOpen} onOpenChange={setIsCreatePlanOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Nuevo Plan
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Crear Plan de Tratamiento</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label>Nombre del Plan</Label>
-                    <Input placeholder="Ej: Rehabilitación Sector Posterior" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Descripción</Label>
-                    <Textarea placeholder="Descripción del plan de tratamiento..." rows={3} />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Tratamientos Incluidos</Label>
-                    <div className="border rounded-lg divide-y">
-                      {treatments.slice(0, 4).map((treatment, index) => (
-                        <div key={treatment.id} className="flex items-center gap-3 p-3">
-                          <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">{treatment.procedure}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Pieza {treatment.toothNumbers.join(", ")} - {treatment.specialty}
-                            </p>
-                          </div>
-                          <Badge variant="outline" className="text-xs">
-                            Orden {index + 1}
-                          </Badge>
-                          <span className="text-sm font-medium">{formatCurrency(treatment.cost)}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <Button variant="outline" size="sm" className="w-full gap-2 mt-2">
-                      <Plus className="h-4 w-4" />
-                      Agregar Tratamiento
-                    </Button>
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" onClick={() => setIsCreatePlanOpen(false)}>
-                      Cancelar
-                    </Button>
-                    <Button onClick={handleCreatePlan}>Crear Plan</Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-
-            <Dialog open={isCreateBudgetOpen} onOpenChange={setIsCreateBudgetOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Nuevo Presupuesto
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl max-h-[90vh]">
-                <DialogHeader>
-                  <DialogTitle>Crear Presupuesto</DialogTitle>
-                </DialogHeader>
-                <ScrollArea className="max-h-[70vh]">
-                  <div className="space-y-4 py-4 pr-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Plan de Tratamiento</Label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar plan" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {treatmentPlans.map((plan) => (
-                              <SelectItem key={plan.id} value={plan.id}>
-                                {plan.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Válido hasta</Label>
-                        <Input type="date" />
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    <div className="space-y-2">
-                      <Label>Tratamientos Incluidos</Label>
-                      <div className="border rounded-lg">
-                        <div className="grid grid-cols-12 gap-2 p-3 bg-muted/30 text-xs font-medium text-muted-foreground">
-                          <div className="col-span-5">Tratamiento</div>
-                          <div className="col-span-2">Pieza</div>
-                          <div className="col-span-2 text-right">Precio</div>
-                          <div className="col-span-2 text-right">Descuento</div>
-                          <div className="col-span-1"></div>
-                        </div>
-                        <div className="divide-y">
-                          {treatments.slice(0, 4).map((treatment) => (
-                            <div key={treatment.id} className="grid grid-cols-12 gap-2 p-3 items-center">
-                              <div className="col-span-5">
-                                <p className="text-sm font-medium">{treatment.procedure}</p>
-                                <p className="text-xs text-muted-foreground">{treatment.specialty}</p>
-                              </div>
-                              <div className="col-span-2 text-sm">
-                                {treatment.toothNumbers.join(", ")}
-                              </div>
-                              <div className="col-span-2 text-right text-sm font-medium">
-                                {formatCurrency(treatment.cost)}
-                              </div>
-                              <div className="col-span-2">
-                                <Input
-                                  type="number"
-                                  placeholder="0%"
-                                  className="h-8 text-right text-sm"
-                                />
-                              </div>
-                              <div className="col-span-1 text-right">
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <Trash2 className="h-4 w-4 text-muted-foreground" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end">
-                      <Button variant="outline" size="sm" className="gap-2">
-                        <Plus className="h-4 w-4" />
-                        Agregar Tratamiento
-                      </Button>
-                    </div>
-
-                    <Separator />
-
-                    <div className="space-y-3 p-4 bg-muted/30 rounded-lg">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Subtotal</span>
-                        <span>{formatCurrency(15500)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Descuento General</span>
-                        <div className="flex items-center gap-2">
-                          <Input type="number" placeholder="0%" className="h-7 w-20 text-right text-sm" />
-                          <span className="text-red-500">-{formatCurrency(1550)}</span>
-                        </div>
-                      </div>
-                      <Separator />
-                      <div className="flex justify-between text-lg font-semibold">
-                        <span>Total</span>
-                        <span className="text-primary">{formatCurrency(13950)}</span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Notas</Label>
-                      <Textarea placeholder="Notas adicionales para el presupuesto..." rows={2} />
-                    </div>
-
-                    <div className="flex justify-end gap-2 pt-4">
-                      <Button variant="outline" onClick={() => setIsCreateBudgetOpen(false)}>
-                        Cancelar
-                      </Button>
-                      <Button variant="outline" className="gap-2">
-                        <Eye className="h-4 w-4" />
-                        Vista Previa
-                      </Button>
-                      <Button onClick={handleCreateBudget} className="gap-2">
-                        <Send className="h-4 w-4" />
-                        Crear y Enviar
-                      </Button>
-                    </div>
-                  </div>
-                </ScrollArea>
-              </DialogContent>
-            </Dialog>
-          </div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <TabsList className="rounded-xl p-1 bg-muted/50">
+            <TabsTrigger value="budgets" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm">
+              Presupuestos
+            </TabsTrigger>
+            <TabsTrigger value="plans" className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm">
+              Planes de Tratamiento
+            </TabsTrigger>
+          </TabsList>
+          <Badge variant="outline" className="w-fit font-mono text-xs rounded-lg">
+            Paciente #{patientRef}
+          </Badge>
         </div>
 
         {/* Budgets Tab */}
         <TabsContent value="budgets" className="mt-0">
-          <Card className="border-border/50">
+          <Card>
             <CardContent className="p-0">
-              <ScrollArea className="h-[500px]">
-                <div className="divide-y divide-border/50">
+              <ScrollArea className="h-[520px]">
+                <div className="divide-y divide-border">
                   {budgets.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Receipt className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                      <p className="text-muted-foreground">No hay presupuestos</p>
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                      <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                        <Receipt className="h-8 w-8 text-muted-foreground/50" />
+                      </div>
+                      <p className="text-lg font-semibold text-foreground mb-1">No hay presupuestos</p>
+                      <p className="text-sm text-muted-foreground mb-4">Crea tu primer presupuesto para este paciente</p>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="mt-4 gap-2"
+                        className="gap-2 rounded-xl"
                         onClick={() => setIsCreateBudgetOpen(true)}
                       >
                         <Plus className="h-4 w-4" />
@@ -416,7 +455,7 @@ export function BudgetSection({
                       </Button>
                     </div>
                   ) : (
-                    budgets.map((budget) => {
+                    budgets.map((budget, index) => {
                       const status = budgetStatusConfig[budget.status]
                       const StatusIcon = status.icon
                       const paidPercentage = (budget.paidAmount / budget.total) * 100
@@ -424,31 +463,39 @@ export function BudgetSection({
                       return (
                         <div
                           key={budget.id}
-                          className="group p-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                          className="group p-5 hover:bg-muted/30 transition-all duration-150 cursor-pointer animate-fade-in"
+                          style={{ animationDelay: `${index * 50}ms` }}
                           onClick={() => setSelectedBudget(budget)}
                         >
                           <div className="flex items-start gap-4">
                             <div
                               className={cn(
-                                "p-3 rounded-xl",
+                                "p-3 rounded-xl transition-transform group-hover:scale-105",
                                 budget.status === "approved"
-                                  ? "bg-emerald-500/10"
+                                  ? "bg-success/10"
                                   : budget.status === "proposed"
-                                  ? "bg-blue-500/10"
-                                  : "bg-zinc-500/10"
+                                  ? "bg-info/10"
+                                  : "bg-muted"
                               )}
                             >
-                              <Receipt className="h-5 w-5 text-foreground" />
+                              <Receipt className={cn(
+                                "h-5 w-5",
+                                budget.status === "approved"
+                                  ? "text-success"
+                                  : budget.status === "proposed"
+                                  ? "text-info"
+                                  : "text-muted-foreground"
+                              )} />
                             </div>
 
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between gap-2">
+                              <div className="flex items-start justify-between gap-3">
                                 <div>
-                                  <div className="flex items-center gap-2">
-                                    <h4 className="font-medium text-foreground">
+                                  <div className="flex items-center gap-2.5">
+                                    <h4 className="font-semibold text-foreground">
                                       Presupuesto #{budget.id.slice(-6).toUpperCase()}
                                     </h4>
-                                    <Badge className={cn("border", status.color)}>
+                                    <Badge variant={status.variant} className="rounded-lg">
                                       <StatusIcon className="h-3 w-3 mr-1" />
                                       {status.label}
                                     </Badge>
@@ -458,42 +505,42 @@ export function BudgetSection({
                                   </p>
                                 </div>
                                 <div className="text-right">
-                                  <p className="text-xl font-bold text-foreground">
+                                  <p className="text-2xl font-bold text-foreground tracking-tight">
                                     {formatCurrency(budget.total)}
                                   </p>
                                   {budget.discount > 0 && (
-                                    <p className="text-xs text-emerald-500">
-                                      -{budget.discount}% descuento aplicado
+                                    <p className="text-xs text-success font-medium">
+                                      -{budget.discount}% descuento
                                     </p>
                                   )}
                                 </div>
                               </div>
 
                               {budget.status === "approved" && (
-                                <div className="mt-3">
-                                  <div className="flex items-center justify-between text-xs mb-1">
-                                    <span className="text-muted-foreground">Progreso de pago</span>
-                                    <span className="font-medium">
+                                <div className="mt-4">
+                                  <div className="flex items-center justify-between text-xs mb-2">
+                                    <span className="text-muted-foreground font-medium">Progreso de pago</span>
+                                    <span className="font-semibold text-foreground">
                                       {formatCurrency(budget.paidAmount)} / {formatCurrency(budget.total)}
                                     </span>
                                   </div>
-                                  <Progress value={paidPercentage} className="h-2" />
+                                  <Progress value={paidPercentage} variant="success" className="h-2" />
                                 </div>
                               )}
 
-                              <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1">
+                              <div className="flex flex-wrap items-center gap-4 mt-4 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1.5">
                                   <Calendar className="h-3.5 w-3.5" />
                                   Creado: {formatDate(budget.createdAt)}
                                 </span>
                                 {budget.validUntil && (
-                                  <span className="flex items-center gap-1">
+                                  <span className="flex items-center gap-1.5">
                                     <Clock className="h-3.5 w-3.5" />
-                                    Válido hasta: {formatDate(budget.validUntil)}
+                                    Valido hasta: {formatDate(budget.validUntil)}
                                   </span>
                                 )}
                                 {budget.approvedAt && (
-                                  <span className="flex items-center gap-1 text-emerald-500">
+                                  <span className="flex items-center gap-1.5 text-success">
                                     <CheckCircle2 className="h-3.5 w-3.5" />
                                     Aprobado: {formatDate(budget.approvedAt)}
                                   </span>
@@ -506,39 +553,39 @@ export function BudgetSection({
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <MoreVertical className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
+                              <DropdownMenuContent align="end" className="rounded-xl w-48">
+                                <DropdownMenuItem className="rounded-lg">
                                   <Eye className="h-4 w-4 mr-2" />
                                   Ver Detalle
                                 </DropdownMenuItem>
                                 {budget.status === "proposed" && (
                                   <>
-                                    <DropdownMenuItem>
+                                    <DropdownMenuItem className="rounded-lg">
                                       <Pen className="h-4 w-4 mr-2" />
                                       Editar
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem className="text-emerald-500">
+                                    <DropdownMenuItem className="text-success rounded-lg">
                                       <CheckCircle2 className="h-4 w-4 mr-2" />
                                       Marcar como Aprobado
                                     </DropdownMenuItem>
                                   </>
                                 )}
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem>
+                                <DropdownMenuItem className="rounded-lg">
                                   <Printer className="h-4 w-4 mr-2" />
                                   Imprimir
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem className="rounded-lg">
                                   <Download className="h-4 w-4 mr-2" />
                                   Descargar PDF
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem className="rounded-lg">
                                   <Copy className="h-4 w-4 mr-2" />
                                   Duplicar
                                 </DropdownMenuItem>
@@ -546,20 +593,20 @@ export function BudgetSection({
                             </DropdownMenu>
                           </div>
 
-                          {/* Items Preview */}
-                          <div className="mt-3 ml-14 flex flex-wrap gap-2">
+                          {/* Items Preview Tags */}
+                          <div className="mt-4 ml-16 flex flex-wrap gap-2">
                             {budget.items.slice(0, 3).map((item) => (
                               <Badge
                                 key={item.treatmentId}
                                 variant="outline"
-                                className="text-xs bg-muted/30"
+                                className="text-xs rounded-lg bg-muted/50"
                               >
                                 {item.description}
                               </Badge>
                             ))}
                             {budget.items.length > 3 && (
-                              <Badge variant="outline" className="text-xs bg-muted/30">
-                                +{budget.items.length - 3} más
+                              <Badge variant="ghost" className="text-xs rounded-lg">
+                                +{budget.items.length - 3} mas
                               </Badge>
                             )}
                           </div>
@@ -575,18 +622,21 @@ export function BudgetSection({
 
         {/* Treatment Plans Tab */}
         <TabsContent value="plans" className="mt-0">
-          <Card className="border-border/50">
+          <Card>
             <CardContent className="p-0">
-              <ScrollArea className="h-[500px]">
-                <div className="divide-y divide-border/50">
+              <ScrollArea className="h-[520px]">
+                <div className="divide-y divide-border">
                   {treatmentPlans.length === 0 ? (
-                    <div className="text-center py-12">
-                      <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                      <p className="text-muted-foreground">No hay planes de tratamiento</p>
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                      <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                        <FileText className="h-8 w-8 text-muted-foreground/50" />
+                      </div>
+                      <p className="text-lg font-semibold text-foreground mb-1">No hay planes de tratamiento</p>
+                      <p className="text-sm text-muted-foreground mb-4">Crea un plan para organizar los tratamientos</p>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="mt-4 gap-2"
+                        className="gap-2 rounded-xl"
                         onClick={() => setIsCreatePlanOpen(true)}
                       >
                         <Plus className="h-4 w-4" />
@@ -594,7 +644,7 @@ export function BudgetSection({
                       </Button>
                     </div>
                   ) : (
-                    treatmentPlans.map((plan) => {
+                    treatmentPlans.map((plan, index) => {
                       const completedCount = plan.treatments.filter(
                         (t) => t.status === "completed"
                       ).length
@@ -603,17 +653,18 @@ export function BudgetSection({
                       return (
                         <div
                           key={plan.id}
-                           className="group p-4 hover:bg-muted/30 transition-colors"
+                          className="group p-5 hover:bg-muted/30 transition-all duration-150 animate-fade-in"
+                          style={{ animationDelay: `${index * 50}ms` }}
                         >
                           <div className="flex items-start gap-4">
-                            <div className="p-3 rounded-xl bg-primary/10">
+                            <div className="p-3 rounded-xl bg-primary/10 transition-transform group-hover:scale-105">
                               <FileText className="h-5 w-5 text-primary" />
                             </div>
 
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between gap-2">
+                              <div className="flex items-start justify-between gap-3">
                                 <div>
-                                  <h4 className="font-medium text-foreground">{plan.name}</h4>
+                                  <h4 className="font-semibold text-foreground">{plan.name}</h4>
                                   {plan.description && (
                                     <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">
                                       {plan.description}
@@ -621,14 +672,14 @@ export function BudgetSection({
                                   )}
                                 </div>
                                 <Badge
-                                  className={cn(
-                                    "border",
+                                  variant={
                                     plan.status === "active"
-                                      ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                                      ? "success"
                                       : plan.status === "completed"
-                                      ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
-                                      : "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
-                                  )}
+                                      ? "info"
+                                      : "ghost"
+                                  }
+                                  className="rounded-lg"
                                 >
                                   {plan.status === "active"
                                     ? "Activo"
@@ -638,10 +689,10 @@ export function BudgetSection({
                                 </Badge>
                               </div>
 
-                              <div className="mt-3">
-                                <div className="flex items-center justify-between text-xs mb-1">
-                                  <span className="text-muted-foreground">Progreso</span>
-                                  <span className="font-medium">
+                              <div className="mt-4">
+                                <div className="flex items-center justify-between text-xs mb-2">
+                                  <span className="text-muted-foreground font-medium">Progreso</span>
+                                  <span className="font-semibold text-foreground">
                                     {completedCount} / {plan.treatments.length} tratamientos
                                   </span>
                                 </div>
@@ -649,39 +700,39 @@ export function BudgetSection({
                               </div>
 
                               {/* Treatment Flow */}
-                              <div className="mt-3 flex items-center gap-1 overflow-x-auto pb-1">
-                                {plan.treatments.slice(0, 5).map((treatment, index) => (
+                              <div className="mt-4 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                                {plan.treatments.slice(0, 5).map((treatment, idx) => (
                                   <div key={treatment.treatmentId} className="flex items-center">
                                     <div
                                       className={cn(
-                                        "px-2 py-1 rounded text-xs whitespace-nowrap",
+                                        "px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap font-medium",
                                         treatment.status === "completed"
-                                          ? "bg-emerald-500/10 text-emerald-500"
+                                          ? "bg-success/10 text-success"
                                           : treatment.status === "in_progress"
-                                          ? "bg-blue-500/10 text-blue-500"
+                                          ? "bg-info/10 text-info"
                                           : "bg-muted text-muted-foreground"
                                       )}
                                     >
-                                      {index + 1}. Pieza {treatments.find(t => t.id === treatment.treatmentId)?.toothNumbers[0] || "?"}
+                                      {idx + 1}. Pieza {treatments.find(t => t.id === treatment.treatmentId)?.toothNumbers[0] || "?"}
                                     </div>
-                                    {index < plan.treatments.length - 1 && index < 4 && (
-                                      <ArrowRight className="h-3 w-3 mx-1 text-muted-foreground flex-shrink-0" />
+                                    {idx < plan.treatments.length - 1 && idx < 4 && (
+                                      <ArrowRight className="h-3 w-3 mx-1.5 text-muted-foreground/50 shrink-0" />
                                     )}
                                   </div>
                                 ))}
                                 {plan.treatments.length > 5 && (
-                                  <Badge variant="outline" className="text-xs ml-1">
+                                  <Badge variant="ghost" className="text-xs ml-1 rounded-lg">
                                     +{plan.treatments.length - 5}
                                   </Badge>
                                 )}
                               </div>
 
-                              <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1">
+                              <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1.5">
                                   <Calendar className="h-3.5 w-3.5" />
                                   {formatDate(plan.createdAt)}
                                 </span>
-                                <span className="flex items-center gap-1">
+                                <span className="flex items-center gap-1.5">
                                   <User className="h-3.5 w-3.5" />
                                   {plan.createdBy}
                                 </span>
@@ -693,27 +744,27 @@ export function BudgetSection({
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  className="h-8 w-8 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <MoreVertical className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
+                              <DropdownMenuContent align="end" className="rounded-xl w-48">
+                                <DropdownMenuItem className="rounded-lg">
                                   <Eye className="h-4 w-4 mr-2" />
                                   Ver Detalle
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem className="rounded-lg">
                                   <Pen className="h-4 w-4 mr-2" />
                                   Editar Plan
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem>
+                                <DropdownMenuItem className="rounded-lg">
                                   <Receipt className="h-4 w-4 mr-2" />
                                   Generar Presupuesto
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem className="rounded-lg">
                                   <Download className="h-4 w-4 mr-2" />
                                   Exportar PDF
                                 </DropdownMenuItem>
@@ -733,7 +784,7 @@ export function BudgetSection({
 
       {/* Budget Detail Dialog */}
       <Dialog open={!!selectedBudget} onOpenChange={() => setSelectedBudget(null)}>
-        <DialogContent className="max-w-3xl max-h-[85vh]">
+        <DialogContent className="max-w-3xl max-h-[85vh] rounded-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Receipt className="h-5 w-5 text-primary" />
@@ -745,52 +796,50 @@ export function BudgetSection({
               <div className="space-y-6 py-4 pr-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Presupuesto</p>
-                    <p className="text-lg font-semibold">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Presupuesto</p>
+                    <p className="text-xl font-bold text-foreground">
                       #{selectedBudget.id.slice(-6).toUpperCase()}
                     </p>
                   </div>
-                  <Badge
-                    className={cn("border", budgetStatusConfig[selectedBudget.status].color)}
-                  >
+                  <Badge variant={budgetStatusConfig[selectedBudget.status].variant} className="rounded-lg">
                     {budgetStatusConfig[selectedBudget.status].label}
                   </Badge>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 p-4 bg-muted/30 rounded-lg">
+                <div className="grid grid-cols-3 gap-4 p-4 bg-muted/30 rounded-xl">
                   <div>
-                    <p className="text-xs text-muted-foreground">Fecha de Creación</p>
-                    <p className="text-sm font-medium">{formatDate(selectedBudget.createdAt)}</p>
+                    <p className="text-xs text-muted-foreground font-medium">Fecha de Creacion</p>
+                    <p className="text-sm font-semibold text-foreground mt-0.5">{formatDate(selectedBudget.createdAt)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Válido Hasta</p>
-                    <p className="text-sm font-medium">
+                    <p className="text-xs text-muted-foreground font-medium">Valido Hasta</p>
+                    <p className="text-sm font-semibold text-foreground mt-0.5">
                       {selectedBudget.validUntil
                         ? formatDate(selectedBudget.validUntil)
-                        : "Sin fecha límite"}
+                        : "Sin fecha limite"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Creado Por</p>
-                    <p className="text-sm font-medium">{selectedBudget.createdBy}</p>
+                    <p className="text-xs text-muted-foreground font-medium">Creado Por</p>
+                    <p className="text-sm font-semibold text-foreground mt-0.5">{selectedBudget.createdBy}</p>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium mb-3">Tratamientos Incluidos</h4>
-                  <div className="border rounded-lg divide-y">
+                  <h4 className="text-sm font-semibold text-foreground mb-3">Tratamientos Incluidos</h4>
+                  <div className="border border-border rounded-xl divide-y divide-border overflow-hidden">
                     {selectedBudget.items.map((item) => (
-                      <div key={item.treatmentId} className="flex items-center justify-between p-3">
+                      <div key={item.treatmentId} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
                         <div>
-                          <p className="text-sm font-medium">{item.description}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-sm font-medium text-foreground">{item.description}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
                             Pieza {item.toothNumber || "General"}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-medium">{formatCurrency(item.finalPrice)}</p>
+                          <p className="text-sm font-semibold text-foreground">{formatCurrency(item.finalPrice)}</p>
                           {item.discount > 0 && (
-                            <p className="text-xs text-red-500">-{item.discount}%</p>
+                            <p className="text-xs text-destructive">-{item.discount}%</p>
                           )}
                         </div>
                       </div>
@@ -798,70 +847,69 @@ export function BudgetSection({
                   </div>
                 </div>
 
-                <Separator />
+                <div className="h-px bg-border" />
 
-                <div className="space-y-2">
+                <div className="space-y-3 p-4 bg-muted/30 rounded-xl">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>{formatCurrency(selectedBudget.subtotal)}</span>
+                    <span className="font-medium text-foreground">{formatCurrency(selectedBudget.subtotal)}</span>
                   </div>
                   {selectedBudget.discount > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
                         Descuento ({selectedBudget.discount}%)
                       </span>
-                      <span className="text-red-500">
+                      <span className="text-destructive font-medium">
                         -{formatCurrency(selectedBudget.subtotal * (selectedBudget.discount / 100))}
                       </span>
                     </div>
                   )}
-                  <Separator />
-                  <div className="flex justify-between text-lg font-semibold">
-                    <span>Total</span>
+                  <div className="h-px bg-border" />
+                  <div className="flex justify-between text-xl font-bold">
+                    <span className="text-foreground">Total</span>
                     <span className="text-primary">{formatCurrency(selectedBudget.total)}</span>
                   </div>
                 </div>
 
                 {selectedBudget.status === "approved" && (
-                  <div className="p-4 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-emerald-500">Estado de Pago</span>
-                      <span className="text-sm">
-                        {formatCurrency(selectedBudget.paidAmount)} /{" "}
-                        {formatCurrency(selectedBudget.total)}
+                  <div className="p-4 bg-success/5 rounded-xl border border-success/20">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-semibold text-success">Estado de Pago</span>
+                      <span className="text-sm font-medium text-foreground">
+                        {formatCurrency(selectedBudget.paidAmount)} / {formatCurrency(selectedBudget.total)}
                       </span>
                     </div>
                     <Progress
                       value={(selectedBudget.paidAmount / selectedBudget.total) * 100}
-                      className="h-2"
+                      variant="success"
+                      className="h-2.5"
                     />
                     <p className="text-xs text-muted-foreground mt-2">
-                      Saldo pendiente:{" "}
-                      {formatCurrency(selectedBudget.total - selectedBudget.paidAmount)}
+                      Saldo pendiente: {formatCurrency(selectedBudget.total - selectedBudget.paidAmount)}
                     </p>
                   </div>
                 )}
 
                 {selectedBudget.notes && (
                   <div>
-                    <h4 className="text-sm font-medium mb-2">Notas</h4>
-                    <p className="text-sm text-muted-foreground p-3 bg-muted/30 rounded-lg">
+                    <h4 className="text-sm font-semibold text-foreground mb-2">Notas</h4>
+                    <p className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-xl">
                       {selectedBudget.notes}
                     </p>
                   </div>
                 )}
 
                 <div className="flex justify-end gap-2 pt-4">
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="outline" className="gap-2 rounded-xl">
                     <Printer className="h-4 w-4" />
                     Imprimir
                   </Button>
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="outline" className="gap-2 rounded-xl">
                     <Download className="h-4 w-4" />
                     Descargar PDF
                   </Button>
                   {selectedBudget.status === "proposed" && (
-                    <Button className="gap-2" onClick={() => onBudgetApprove?.(selectedBudget.id)}>
+                    <Button className="gap-2 rounded-xl shadow-sm" onClick={() => onBudgetApprove?.(selectedBudget.id)}>
                       <CheckCircle2 className="h-4 w-4" />
                       Aprobar Presupuesto
                     </Button>

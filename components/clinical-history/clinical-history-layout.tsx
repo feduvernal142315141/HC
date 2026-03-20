@@ -5,10 +5,14 @@ import { cn } from "@/lib/utils/utils";
 import {
   Button,
   ScrollArea,
-  Separator,
   Skeleton,
   Card,
   CardContent,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+  ThemeToggle,
 } from "@/components/ui";
 import { PatientHeader } from "./patient-header";
 import { DentalSummary } from "./dental-summary";
@@ -33,6 +37,7 @@ import {
   CreditCard,
   ChevronLeft,
   Menu,
+  X,
 } from "lucide-react";
 
 type ClinicalSection =
@@ -51,18 +56,19 @@ interface ClinicalNavItem {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   description: string;
+  category: "overview" | "clinical" | "financial";
 }
 
 const navigationItems: ClinicalNavItem[] = [
-  { id: "summary", label: "Resumen Dental", icon: LayoutDashboard, description: "Vista general del paciente" },
-  { id: "odontogram", label: "Odontograma", icon: Stethoscope, description: "Estado dental visual" },
-  { id: "history", label: "Historia Clínica", icon: FileText, description: "Anamnesis y antecedentes" },
-  { id: "treatments", label: "Tratamientos", icon: Syringe, description: "Procedimientos dentales" },
-  { id: "evolutions", label: "Evoluciones", icon: ClipboardList, description: "Registro cronológico" },
-  { id: "radiographs", label: "Radiografías", icon: Image, description: "Imágenes diagnósticas" },
-  { id: "documents", label: "Documentos", icon: FileCheck, description: "Consentimientos y legales" },
-  { id: "budget", label: "Presupuesto", icon: Receipt, description: "Plan de tratamiento" },
-  { id: "payments", label: "Pagos", icon: CreditCard, description: "Estado financiero" },
+  { id: "summary", label: "Resumen", icon: LayoutDashboard, description: "Vista general", category: "overview" },
+  { id: "odontogram", label: "Odontograma", icon: Stethoscope, description: "Estado dental", category: "overview" },
+  { id: "history", label: "Historia", icon: FileText, description: "Anamnesis", category: "clinical" },
+  { id: "treatments", label: "Tratamientos", icon: Syringe, description: "Procedimientos", category: "clinical" },
+  { id: "evolutions", label: "Evoluciones", icon: ClipboardList, description: "Registro", category: "clinical" },
+  { id: "radiographs", label: "Radiografias", icon: Image, description: "Imagenes", category: "clinical" },
+  { id: "documents", label: "Documentos", icon: FileCheck, description: "Legales", category: "clinical" },
+  { id: "budget", label: "Presupuesto", icon: Receipt, description: "Plan de pago", category: "financial" },
+  { id: "payments", label: "Pagos", icon: CreditCard, description: "Financiero", category: "financial" },
 ];
 
 interface ClinicalHistoryLayoutProps {
@@ -101,13 +107,16 @@ export function ClinicalHistoryLayout({ patientId, onClose }: ClinicalHistoryLay
 
     if (error) {
       return (
-        <Card>
-          <CardContent className="space-y-3 py-10 text-center">
-            <p className="text-base font-semibold text-foreground">
-              No pudimos cargar la historia clínica
+        <Card className="border-destructive/20 bg-destructive/5">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
+              <X className="w-7 h-7 text-destructive" />
+            </div>
+            <p className="text-lg font-semibold text-foreground mb-1">
+              No pudimos cargar la historia clinica
             </p>
-            <p className="text-sm text-muted-foreground">{error}</p>
-            <Button variant="outline" onClick={refresh}>
+            <p className="text-sm text-muted-foreground mb-6 max-w-sm">{error}</p>
+            <Button onClick={refresh} className="gap-2">
               Reintentar carga
             </Button>
           </CardContent>
@@ -129,7 +138,6 @@ export function ClinicalHistoryLayout({ patientId, onClose }: ClinicalHistoryLay
           <ClinicalOdontogram
             treatments={treatments}
             onToothSelect={() => {
-              // Navigate to treatments filtered by tooth
               setActiveSection("treatments");
             }}
           />
@@ -174,161 +182,270 @@ export function ClinicalHistoryLayout({ patientId, onClose }: ClinicalHistoryLay
     }
   };
 
+  const categories = [
+    { key: "overview", label: "General" },
+    { key: "clinical", label: "Clinico" },
+    { key: "financial", label: "Financiero" },
+  ] as const;
+
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Patient Header - Always visible */}
-      <PatientHeader
-        patient={patient}
-        isLoading={isLoading}
-        onClose={onClose}
-        onQuickAction={(action) => {
-          switch (action) {
-            case "new-treatment":
-              setActiveSection("treatments");
-              break;
-            case "new-evolution":
-              setActiveSection("evolutions");
-              break;
-            case "add-radiograph":
-              setActiveSection("radiographs");
-              break;
-            case "view-budget":
-              setActiveSection("budget");
-              break;
-          }
-        }}
-      />
+    <TooltipProvider delayDuration={0}>
+      <div className="flex flex-col h-screen bg-background">
+        {/* Patient Header */}
+        <PatientHeader
+          patient={patient}
+          isLoading={isLoading}
+          onClose={onClose}
+          onQuickAction={(action) => {
+            switch (action) {
+              case "new-treatment":
+                setActiveSection("treatments");
+                break;
+              case "new-evolution":
+                setActiveSection("evolutions");
+                break;
+              case "add-radiograph":
+                setActiveSection("radiographs");
+                break;
+              case "view-budget":
+                setActiveSection("budget");
+                break;
+            }
+          }}
+        />
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Mobile Nav Overlay */}
-        {isMobileNavOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-            onClick={() => setIsMobileNavOpen(false)}
-          />
-        )}
-
-        {/* Left Navigation */}
-        <aside
-          className={cn(
-            "fixed lg:relative z-50 lg:z-auto h-[calc(100vh-80px)] bg-card border-r border-border transition-all duration-300",
-            isNavCollapsed ? "w-16" : "w-64",
-            isMobileNavOpen
-              ? "translate-x-0"
-              : "-translate-x-full lg:translate-x-0"
+        <div className="flex flex-1 overflow-hidden">
+          {/* Mobile Nav Overlay */}
+          {isMobileNavOpen && (
+            <div
+              className="fixed inset-0 bg-foreground/20 backdrop-blur-sm z-40 lg:hidden animate-fade-in"
+              onClick={() => setIsMobileNavOpen(false)}
+            />
           )}
-        >
-          <div className="flex flex-col h-full">
-            {/* Nav Header */}
-            <div className="flex items-center justify-between p-3 border-b border-border">
-              {!isNavCollapsed && (
-                <span className="text-sm font-semibold text-foreground">
-                  Historia Clínica
-                </span>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 hidden lg:flex"
-                onClick={() => setIsNavCollapsed(!isNavCollapsed)}
-              >
-                <ChevronLeft
+
+          {/* Premium Sidebar Navigation */}
+          <aside
+            className={cn(
+              "fixed lg:relative z-50 lg:z-auto h-[calc(100vh-76px)] transition-all duration-300 ease-out",
+              // Glass effect background
+              "bg-card/95 backdrop-blur-xl border-r border-border",
+              // Width states
+              isNavCollapsed ? "w-[72px]" : "w-64",
+              // Mobile states
+              isMobileNavOpen
+                ? "translate-x-0 shadow-xl"
+                : "-translate-x-full lg:translate-x-0"
+            )}
+          >
+            <div className="flex flex-col h-full">
+              {/* Nav Header */}
+              <div className={cn(
+                "flex items-center h-14 px-3 border-b border-border/50",
+                isNavCollapsed ? "justify-center" : "justify-between"
+              )}>
+                {!isNavCollapsed && (
+                  <span className="text-sm font-semibold text-foreground tracking-tight">
+                    Historia Clinica
+                  </span>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className={cn(
-                    "h-4 w-4 transition-transform",
-                    isNavCollapsed && "rotate-180"
+                    "h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted",
+                    "transition-colors duration-150",
+                    "hidden lg:flex"
                   )}
-                />
-              </Button>
-            </div>
+                  onClick={() => setIsNavCollapsed(!isNavCollapsed)}
+                >
+                  <ChevronLeft
+                    className={cn(
+                      "h-4 w-4 transition-transform duration-300",
+                      isNavCollapsed && "rotate-180"
+                    )}
+                  />
+                </Button>
+              </div>
 
-            {/* Navigation Items */}
-            <ScrollArea className="flex-1 py-2">
-              <nav className="space-y-1 px-2">
-                {navigationItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activeSection === item.id;
+              {/* Navigation Items */}
+              <ScrollArea className="flex-1">
+                <nav className="p-2 space-y-6">
+                  {categories.map((category) => {
+                    const items = navigationItems.filter((item) => item.category === category.key);
+                    
+                    return (
+                      <div key={category.key}>
+                        {!isNavCollapsed && (
+                          <p className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                            {category.label}
+                          </p>
+                        )}
+                        <div className="space-y-1">
+                          {items.map((item) => {
+                            const Icon = item.icon;
+                            const isActive = activeSection === item.id;
 
-                  return (
-                    <Button
-                      key={item.id}
-                      variant={isActive ? "default" : "ghost"}
-                      className={cn(
-                        "w-full justify-start gap-3 h-auto py-3",
-                        isNavCollapsed && "justify-center px-0",
-                        isActive && "bg-primary text-primary-foreground"
-                      )}
-                      onClick={() => handleSectionChange(item.id)}
-                      title={isNavCollapsed ? item.label : undefined}
-                    >
-                      <Icon className={cn("h-5 w-5 shrink-0", isActive && "text-primary-foreground")} />
-                      {!isNavCollapsed && (
-                        <div className="flex flex-col items-start text-left">
-                          <span className="text-sm font-medium">{item.label}</span>
-                          <span
-                            className={cn(
-                              "text-xs",
-                              isActive
-                                ? "text-primary-foreground/80"
-                                : "text-muted-foreground"
-                            )}
-                          >
-                            {item.description}
-                          </span>
+                            const navButton = (
+                              <button
+                                key={item.id}
+                                onClick={() => handleSectionChange(item.id)}
+                                className={cn(
+                                  "w-full flex items-center gap-3 rounded-xl transition-all duration-150",
+                                  isNavCollapsed ? "justify-center p-2.5" : "px-3 py-2.5",
+                                  // Active state
+                                  isActive
+                                    ? "bg-primary text-primary-foreground shadow-sm"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/80",
+                                  // Active indicator
+                                  "relative"
+                                )}
+                              >
+                                {/* Active indicator line */}
+                                {isActive && !isNavCollapsed && (
+                                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary-foreground/30 rounded-r-full" />
+                                )}
+                                
+                                <Icon className={cn(
+                                  "h-[18px] w-[18px] shrink-0 transition-transform duration-150",
+                                  isActive && "scale-110"
+                                )} />
+                                
+                                {!isNavCollapsed && (
+                                  <div className="flex flex-col items-start text-left min-w-0">
+                                    <span className={cn(
+                                      "text-sm font-medium truncate",
+                                      isActive && "font-semibold"
+                                    )}>
+                                      {item.label}
+                                    </span>
+                                  </div>
+                                )}
+                              </button>
+                            );
+
+                            // Wrap with tooltip when collapsed
+                            if (isNavCollapsed) {
+                              return (
+                                <Tooltip key={item.id}>
+                                  <TooltipTrigger asChild>
+                                    {navButton}
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right" className="font-medium">
+                                    {item.label}
+                                  </TooltipContent>
+                                </Tooltip>
+                              );
+                            }
+
+                            return navButton;
+                          })}
                         </div>
-                      )}
-                    </Button>
-                  );
-                })}
-              </nav>
-            </ScrollArea>
+                      </div>
+                    );
+                  })}
+                </nav>
+              </ScrollArea>
 
-            {/* Nav Footer */}
-            <Separator />
-            <div className="p-3">
-              {!isNavCollapsed && (
-                <p className="text-xs text-muted-foreground text-center">
-                  Sistema Médico Dental v1.0
-                </p>
-              )}
+              {/* Nav Footer */}
+              <div className={cn(
+                "border-t border-border/50 p-3",
+                isNavCollapsed ? "flex flex-col items-center gap-3" : "space-y-3"
+              )}>
+                <div className={cn(
+                  "flex items-center",
+                  isNavCollapsed ? "justify-center" : "justify-between px-2"
+                )}>
+                  {!isNavCollapsed && (
+                    <div>
+                      <p className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">
+                        Sistema Dental
+                      </p>
+                      <p className="text-xs text-muted-foreground">v2.0 Premium</p>
+                    </div>
+                  )}
+                  <ThemeToggle />
+                </div>
+                {isNavCollapsed && (
+                  <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                )}
+              </div>
             </div>
-          </div>
-        </aside>
+          </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-hidden">
-          {/* Mobile Nav Toggle */}
-          <div className="lg:hidden p-3 border-b border-border">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsMobileNavOpen(true)}
-              className="gap-2"
-            >
-              <Menu className="h-4 w-4" />
-              <span>Navegación</span>
-            </Button>
-          </div>
+          {/* Main Content */}
+          <main className="flex-1 overflow-hidden flex flex-col">
+            {/* Mobile Nav Toggle */}
+            <div className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-border bg-card/50 backdrop-blur-sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsMobileNavOpen(true)}
+                className="gap-2 rounded-xl"
+              >
+                <Menu className="h-4 w-4" />
+                <span>Menu</span>
+              </Button>
+              <span className="text-sm font-medium text-muted-foreground">
+                {navigationItems.find((item) => item.id === activeSection)?.label}
+              </span>
+            </div>
 
-          <ScrollArea className="h-full">
-            <div className="p-4 lg:p-6">{renderSection()}</div>
-          </ScrollArea>
-        </main>
+            <ScrollArea className="flex-1">
+              <div className="p-4 lg:p-8 max-w-7xl mx-auto w-full animate-fade-in">
+                {renderSection()}
+              </div>
+            </ScrollArea>
+          </main>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
 
 function SectionSkeleton() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
+      {/* Header skeleton */}
       <div className="space-y-2">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-4 w-72" />
+        <Skeleton className="h-9 w-56 rounded-xl skeleton-shimmer" />
+        <Skeleton className="h-5 w-80 rounded-lg skeleton-shimmer" />
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[...Array(6)].map((_, i) => (
-          <Skeleton key={i} className="h-32 rounded-xl" />
+      
+      {/* Metrics grid skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="rounded-2xl border border-border p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-11 w-11 rounded-xl skeleton-shimmer" />
+              <Skeleton className="h-4 w-16 rounded-lg skeleton-shimmer" />
+            </div>
+            <Skeleton className="h-8 w-24 rounded-lg skeleton-shimmer" />
+            <Skeleton className="h-4 w-32 rounded-lg skeleton-shimmer" />
+          </div>
         ))}
+      </div>
+
+      {/* Content cards skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 rounded-2xl border border-border p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-40 rounded-lg skeleton-shimmer" />
+            <Skeleton className="h-9 w-24 rounded-xl skeleton-shimmer" />
+          </div>
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-xl skeleton-shimmer" />
+            ))}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-border p-6 space-y-4">
+          <Skeleton className="h-6 w-32 rounded-lg skeleton-shimmer" />
+          <div className="space-y-3">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full rounded-xl skeleton-shimmer" />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
