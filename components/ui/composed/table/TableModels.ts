@@ -1,0 +1,52 @@
+import { FilterOperatorType } from "@/lib/models/filterOperator";
+
+
+export interface TableProps<T extends Record<string, unknown>> {
+  columns: Columns<T>[];
+  data: T[];
+  total: number;
+  onPageChange: (page: number) => void;
+  pageSize?: number;
+  onPageSizeChange?: (pageSize: number) => void;
+  onFilterChange?: (filters: string) => void;
+}
+
+export interface Columns<T extends Record<string, unknown> = Record<string, unknown>> {
+  key: string;
+  title: string;
+  className?: string;
+  filterable?: boolean;
+  filterOperator?: FilterOperatorType;
+  filterType?:
+    | "boolean"
+    | "text"
+    | "numeric"
+    | "numericText"
+    | "date"
+    | "datetime"
+    | "dateRange"
+    | undefined;
+  relatedField?: string;
+  customFilters?: (
+    onFilterChange: (key: string, value: string) => void,
+    currentValue: string
+  ) => React.ReactNode;
+  customCell?: (value: unknown, row: T) => React.ReactNode;
+}
+
+export interface FilterObject {
+  logic: string;
+  filters: Filter[];
+}
+
+export interface Filter {
+  field: string;
+  operator: string;
+  value: string;
+}
+
+export interface FieldMapping {
+  field: string;
+  type?: string;
+  relatedField?: string;
+}
